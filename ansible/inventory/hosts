@@ -1,0 +1,5 @@
+#[kubernetes]
+#devops-lab ansible_host=local ansible_user=root
+[kubernetes]
+localhost ansible_connection=local
+

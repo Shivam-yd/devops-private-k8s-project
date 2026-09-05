@@ -1,0 +1,53 @@
+---
+- name: Display server hostname
+  ansible.builtin.debug:
+    msg: "Configuring Kubernetes server {{ kubernetes_server_hostname }}"
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - git
+      - ca-certificates
+      - unzip
+    state: present
+    update_cache: true
+
+- name: Check K3s service
+  ansible.builtin.systemd:
+    name: "{{ k3s_service_name }}"
+  register: k3s_status
+
+- name: Display K3s status
+  ansible.builtin.debug:
+    msg: "K3s service state is {{ k3s_status.status.ActiveState }}"
+
+- name: Check kubectl
+  ansible.builtin.command:
+    cmd: kubectl version --client
+  register: kubectl_version
+  changed_when: false
+
+- name: Display kubectl version
+  ansible.builtin.debug:
+    msg: "{{ kubectl_version.stdout }}"
+
+- name: Check Kubernetes nodes
+  ansible.builtin.command:
+    cmd: kubectl get nodes
+  register: kubernetes_nodes
+  changed_when: false
+
+- name: Display Kubernetes nodes
+  ansible.builtin.debug:
+    msg: "{{ kubernetes_nodes.stdout }}"
+
+- name: Check disk space
+  ansible.builtin.command:
+    cmd: df -h /
+  register: disk_usage
+  changed_when: false
+
+- name: Display disk usage
+  ansible.builtin.debug:
+    msg: "{{ disk_usage.stdout }}"

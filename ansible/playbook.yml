@@ -1,0 +1,7 @@
+---
+- name: Configure Kubernetes server
+  hosts: kubernetes
+  become: false
+
+  roles:
+    - kubernetes

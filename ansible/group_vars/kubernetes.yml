@@ -1,0 +1,6 @@
+kubernetes_server_ip: "172.16.4.110"
+kubernetes_server_hostname: "devops-lab"
+
+k3s_service_name: "k3s"
+
+project_directory: "/root/devops-private-k8s-project"
