@@ -5,7 +5,7 @@ on:
 
 jobs:
   test-runner:
-    runs-on: [self-hosted, linux, k3s]
+    runs-on: [self-hosted, linux]
 
     steps:
       - name: Check hostname
