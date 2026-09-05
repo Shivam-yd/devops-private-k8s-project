@@ -1,0 +1,26 @@
+---
+- name: Install GitHub runner dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - git
+      - jq
+      - unzip
+      - ca-certificates
+    state: present
+    update_cache: true
+
+- name: Create GitHub Actions runner user
+  ansible.builtin.user:
+    name: "{{ github_runner_user }}"
+    shell: /bin/bash
+    create_home: true
+    home: "/home/{{ github_runner_user }}"
+
+- name: Create runner directory
+  ansible.builtin.file:
+    path: "{{ github_runner_directory }}"
+    state: directory
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_user }}"
+    mode: "0755"

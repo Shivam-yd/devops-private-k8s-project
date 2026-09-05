@@ -1,0 +1,24 @@
+name: Runner Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-runner:
+    runs-on: [self-hosted, linux, k3s]
+
+    steps:
+      - name: Check hostname
+        run: hostname
+
+      - name: Check OS
+        run: cat /etc/os-release
+
+      - name: Check kubectl
+        run: kubectl version --client
+
+      - name: Check Kubernetes
+        run: kubectl get nodes
+
+      - name: Check K3s
+        run: systemctl is-active k3s

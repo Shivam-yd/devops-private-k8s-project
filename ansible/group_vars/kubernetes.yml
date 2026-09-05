@@ -4,3 +4,9 @@ kubernetes_server_hostname: "devops-lab"
 k3s_service_name: "k3s"
 
 project_directory: "/root/devops-private-k8s-project"
+
+github_runner_user: "actions"
+github_runner_directory: "/home/actions/actions-runner"
+
+github_repo_owner: "Shivam-yd"
+github_repo_name: "devops-private-k8s-project"
