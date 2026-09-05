@@ -11,7 +11,7 @@ replicas:
     count: 2
 
 images:
-  - name: shivamy/devops-app
+  - name: shivamyd/devops-app
     newTag: IMAGE_TAG_PLACEHOLDER
 
 patches:
