@@ -12,7 +12,7 @@ replicas:
 
 images:
   - name: shivamy/devops-app
-    newTag: 1.0.0
+    newTag: IMAGE_TAG_PLACEHOLDER
 
 patches:
   - target:

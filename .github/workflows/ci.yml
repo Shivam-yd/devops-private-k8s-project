@@ -10,6 +10,7 @@ on:
       - main
 
 jobs:
+
   test:
     runs-on: [self-hosted, linux, k3s]
 
@@ -31,6 +32,7 @@ jobs:
       - name: Test application
         run: |
           ./venv/bin/python -m py_compile app/app.py
+
 
   docker:
     needs: test
@@ -57,3 +59,34 @@ jobs:
         run: |
           docker push \
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-app:${{ github.sha }}
+
+
+  deploy-qa:
+    needs: docker
+
+    runs-on: [self-hosted, linux, k3s]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to QA
+        run: |
+          kubectl kustomize kubernetes/environments/qa \
+            | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g" \
+            | kubectl apply -f -
+
+      - name: Wait for deployment
+        run: |
+          kubectl rollout status \
+            deployment/devops-app \
+            -n qa \
+            --timeout=120s
+
+      - name: Check QA pods
+        run: |
+          kubectl get pods -n qa
+
+      - name: Check QA service
+        run: |
+          kubectl get service -n qa
