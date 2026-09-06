@@ -78,17 +78,18 @@ jobs:
             | sed "s|IMAGE_TAG_PLACEHOLDER|latest|g" \
             | kubectl apply -f -
 
+       - name: Restart QA deployment
+        run: |
+          kubectl rollout restart \
+            deployment/devops-app \
+            -n qa
+
       - name: Wait for deployment
         run: |
           kubectl rollout status \
             deployment/devops-app \
             -n qa \
             --timeout=120s    
-      - name: Restart QA deployment
-        run: |
-           kubectl rollout restart \
-             deployment/devops-app \
-             -n qa
           
       - name: Check QA pods
         run: |
