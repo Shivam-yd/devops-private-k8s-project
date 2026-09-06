@@ -14,7 +14,7 @@ def home():
             <title>DevOps Application</title>
         </head>
         <body>
-            <h1>Hello from DevOps CI/CD Project! with latest image</h1>
+            <h1>Hello from DevOps CI/CD Project! with latest</h1>
             <p>Environment: {environment}</p>
             <p>Version: {version}</p>
         </body>
