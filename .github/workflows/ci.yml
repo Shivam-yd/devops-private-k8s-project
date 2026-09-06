@@ -92,3 +92,36 @@ jobs:
       - name: Check QA service
         run: |
           kubectl get service -n qa
+
+  deploy-uat:
+    needs: deploy-qa
+
+    runs-on: [self-hosted, linux, k3s]
+
+    environment:
+      name: uat
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to UAT
+        run: |
+          kubectl kustomize kubernetes/environments/uat \
+            | sed "s|IMAGE_TAG_PLACEHOLDER|latest|g" \
+            | kubectl apply -f -
+
+      - name: Wait for UAT deployment
+        run: |
+          kubectl rollout status \
+            deployment/devops-app \
+            -n uat \
+            --timeout=120s
+
+      - name: Check UAT pods
+        run: |
+          kubectl get pods -n uat
+
+      - name: Check UAT service
+        run: |
+          kubectl get service -n uat
