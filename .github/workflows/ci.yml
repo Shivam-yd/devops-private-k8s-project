@@ -78,7 +78,7 @@ jobs:
             | sed "s|IMAGE_TAG_PLACEHOLDER|latest|g" \
             | kubectl apply -f -
 
-       - name: Restart QA deployment
+      - name: Restart QA deployment
         run: |
           kubectl rollout restart \
             deployment/devops-app \
