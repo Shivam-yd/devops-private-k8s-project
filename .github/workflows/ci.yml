@@ -83,8 +83,13 @@ jobs:
           kubectl rollout status \
             deployment/devops-app \
             -n qa \
-            --timeout=120s
-
+            --timeout=120s    
+      - name: Restart QA deployment
+        run: |
+           kubectl rollout restart \
+             deployment/devops-app \
+             -n qa
+          
       - name: Check QA pods
         run: |
           kubectl get pods -n qa
