@@ -9,6 +9,11 @@ spec:
   selector:
     matchLabels:
       app: devops-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
 
   template:
     metadata:
@@ -20,12 +25,6 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
      
-      strategy:
-        type: RollingUpdate
-        rollingUpdate:
-        maxUnavailable: 0
-        maxSurge: 1
-
       containers:
         - name: devops-app
           
