@@ -111,18 +111,13 @@ jobs:
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
 
-  notify-uat:
-    needs: deploy-qa
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Send UAT approval notification
+      - name: QA health check
         run: |
-          echo "UAT approval is required"
+          kubectl run qa-health-check  --rm -i --restart=Never -n qa --image=curlimages/curl -- curl -f http://devops-app:5000/health
 
-  
+
   deploy-uat:
-    needs: [deploy-qa, notify-uat]  
+    needs: deploy-qa 
 
     runs-on: [self-hosted, linux, k3s]
 
@@ -161,6 +156,18 @@ jobs:
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
 
+    - name: UAT health check
+      run: |
+         kubectl run uat-health-check \
+         --rm \
+         -i \
+         --restart=Never \
+         -n uat \
+         --image=curlimages/curl \
+         -- \
+         curl -f http://devops-app:5000/health
+
+         
   deploy-production:
     needs: deploy-uat
 
@@ -200,3 +207,19 @@ jobs:
             -n production \
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
+      - name: Production health check
+        run: |
+          kubectl run production-health-check \
+          --rm \
+          -i \
+          --restart=Never \
+          -n production \
+          --image=curlimages/curl \
+          -- \
+          curl -f http://devops-app:5000/health
+
+      - name: Deployment summary
+        run: |
+         echo "Application deployed successfully"
+         echo "Environment: production"
+         echo "Image: ${{ secrets.DOCKERHUB_USERNAME }}/devops-app:${{ github.sha }}"

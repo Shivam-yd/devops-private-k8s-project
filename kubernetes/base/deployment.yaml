@@ -3,7 +3,7 @@ kind: Deployment
 
 metadata:
   name: devops-app
-
+  project: devops-private-k8s-project
 spec:
   replicas: 1
 
@@ -17,6 +17,16 @@ spec:
         app: devops-app
 
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+     
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+        maxUnavailable: 0
+        maxSurge: 1
+
       containers:
         - name: devops-app
           
@@ -24,7 +34,7 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
-
+          
           env:
             - name: ENVIRONMENT
               value: "unknown"
@@ -56,3 +66,8 @@ spec:
 
             initialDelaySeconds: 15
             periodSeconds: 20
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
