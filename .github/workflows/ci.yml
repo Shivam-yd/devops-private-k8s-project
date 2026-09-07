@@ -69,7 +69,10 @@ jobs:
     needs: docker
 
     runs-on: [self-hosted, linux, k3s]
-
+    
+    environment:
+      name: uat
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
