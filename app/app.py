@@ -6,7 +6,7 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     environment = os.getenv("ENVIRONMENT", "local")
-    version = os.getenv("APP_VERSION", "1.0.0")
+    version = os.getenv("APP_VERSION", "2.0.0")
 
     return f"""
     <html>
@@ -14,7 +14,7 @@ def home():
             <title>DevOps Application</title>
         </head>
         <body>
-            <h1>Hello from DevOps CI/CD Project! with updated</h1>
+            <h1>Hello from DevOps CI/CD Project!</h1>
             <p>Environment: {environment}</p>
             <p>Version: {version}</p>
         </body>
