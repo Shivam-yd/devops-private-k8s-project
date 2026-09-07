@@ -106,7 +106,7 @@ jobs:
 
       - name: Verify QA image
         run: |
-          kubectl get deployment devops-app \
+         kubectl get deployment devops-app \
             -n qa \
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
@@ -156,16 +156,16 @@ jobs:
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
 
-    - name: UAT health check
-      run: |
-         kubectl run uat-health-check \
-         --rm \
-         -i \
-         --restart=Never \
-         -n uat \
-         --image=curlimages/curl \
-         -- \
-         curl -f http://devops-app:5000/health
+      - name: UAT health check
+        run: |
+          kubectl run uat-health-check \
+          --rm \
+          -i \
+          --restart=Never \
+          -n uat \
+          --image=curlimages/curl \
+          -- \
+          curl -f http://devops-app:5000/health
 
          
   deploy-production:
