@@ -671,22 +671,3 @@ The resulting workflow demonstrates how a development change can move from **sou
 This repository is intended as a **learning and portfolio project**.
 
 Environment-specific information such as private IP addresses, credentials, tokens, internal hostnames, and production secrets should never be committed to the repository.
-
----
-
-## 👤 Author
-
-**Shivam Yadav**
-
-DevOps Engineer 
-
-Areas of interest:
-
-* Linux
-* AWS
-* Docker
-* Kubernetes
-* Ansible
-* Terraform
-* CI/CD
-* DevOps
