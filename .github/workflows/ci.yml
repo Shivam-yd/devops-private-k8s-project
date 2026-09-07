@@ -80,7 +80,7 @@ jobs:
       - name: Deploy to QA
         run: |
           kubectl kustomize kubernetes/environments/qa \
-            | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g"
+            | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g" \
             | kubectl apply -f -
 
       - name: Restart QA deployment
@@ -109,7 +109,7 @@ jobs:
           kubectl get deployment devops-app \
             -n qa \
             -o jsonpath='{.spec.template.spec.containers[0].image}'
-                echo
+            echo
                 
   deploy-uat:
     needs: deploy-qa
@@ -149,7 +149,7 @@ jobs:
           kubectl get deployment devops-app \
             -n uat \
             -o jsonpath='{.spec.template.spec.containers[0].image}'
-          echo
+            echo
 
   deploy-production:
     needs: deploy-uat
@@ -189,4 +189,4 @@ jobs:
           kubectl get deployment devops-app \
             -n production \
             -o jsonpath='{.spec.template.spec.containers[0].image}'
-          echo
+            echo
