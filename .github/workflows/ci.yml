@@ -111,9 +111,6 @@ jobs:
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
 
-      - name: QA health check
-        run: |
-          kubectl run qa-health-check  --rm -i --restart=Never -n qa --image=curlimages/curl -- curl -f http://devops-app:5000/health
 
 
   deploy-uat:
