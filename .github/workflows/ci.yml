@@ -80,7 +80,7 @@ jobs:
       - name: Deploy to QA
         run: |
           kubectl kustomize kubernetes/environments/qa \
-            | sed "s|IMAGE_TAG_PLACEHOLDER|latest|g" \
+            | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g"
             | kubectl apply -f -
 
       - name: Restart QA deployment
@@ -119,7 +119,7 @@ jobs:
       - name: Deploy to UAT
         run: |
           kubectl kustomize kubernetes/environments/uat \
-            | sed "s|IMAGE_TAG_PLACEHOLDER|latest|g" \
+            | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g" \
             | kubectl apply -f -
 
       - name: Wait for UAT deployment
@@ -152,7 +152,7 @@ jobs:
       - name: Deploy to Production
         run: |
           kubectl kustomize kubernetes/environments/production \
-            | sed "s|IMAGE_TAG_PLACEHOLDER|latest|g" \
+            | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g" \
             | kubectl apply -f -
 
       - name: Wait for Production rollout
