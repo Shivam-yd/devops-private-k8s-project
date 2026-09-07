@@ -22,15 +22,3 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/env/0/value
         value: qa
-
-  - target:
-      kind: Service
-      name: devops-app
-    patch: |-
-      - op: replace
-        path: /spec/type
-        value: NodePort
-
-      - op: add
-        path: /spec/ports/0/nodePort
-        value: 30500
