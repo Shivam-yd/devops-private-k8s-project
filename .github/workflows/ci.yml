@@ -104,6 +104,13 @@ jobs:
         run: |
           kubectl get service -n qa
 
+      - name: Verify QA image
+       run: |
+          kubectl get deployment devops-app \
+            -n qa \
+            -o jsonpath='{.spec.template.spec.containers[0].image}'
+                echo
+                
   deploy-uat:
     needs: deploy-qa
 
@@ -137,6 +144,13 @@ jobs:
         run: |
           kubectl get service -n uat
 
+      - name: Verify UAT image
+        run: |
+          kubectl get deployment devops-app \
+            -n uat \
+            -o jsonpath='{.spec.template.spec.containers[0].image}'
+          echo
+
   deploy-production:
     needs: deploy-uat
 
@@ -169,3 +183,10 @@ jobs:
       - name: Check Production service
         run: |
           kubectl get service -n production
+
+      - name: Verify Production image
+        run: |
+          kubectl get deployment devops-app \
+            -n production \
+            -o jsonpath='{.spec.template.spec.containers[0].image}'
+          echo
