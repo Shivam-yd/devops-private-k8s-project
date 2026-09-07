@@ -4,6 +4,7 @@ A hands-on DevOps project demonstrating how to build, containerize, test, and de
 
 The project focuses on real-world DevOps practices such as **CI/CD, immutable Docker images, environment promotion, manual production approvals, Kubernetes self-healing, rolling deployments, rollback, infrastructure as code, and security hardening**.
 
+Complete Guide is uploaded as a PDF file.
 ---
 
 ## 🏗️ Architecture
