@@ -110,9 +110,19 @@ jobs:
             -n qa \
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
-                
-  deploy-uat:
+
+  notify-uat:
     needs: deploy-qa
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send UAT approval notification
+        run: |
+          echo "UAT approval is required"
+
+  
+  deploy-uat:
+    needs: [deploy-qa, notify-uat]  
 
     runs-on: [self-hosted, linux, k3s]
 
