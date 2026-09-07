@@ -5,6 +5,7 @@ namespace: qa
 
 resources:
   - ../../base
+  - ingress.yaml
 
 replicas:
   - name: devops-app
