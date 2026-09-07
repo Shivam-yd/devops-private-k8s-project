@@ -5,6 +5,7 @@ namespace: uat
 
 resources:
   - ../../base
+  - ingress.yaml
 
 replicas:
   - name: devops-app
