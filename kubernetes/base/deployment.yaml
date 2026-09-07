@@ -3,7 +3,6 @@ kind: Deployment
 
 metadata:
   name: devops-app
-  project: devops-private-k8s-project
 spec:
   replicas: 1
 
