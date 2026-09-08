@@ -1,3 +1,4 @@
+import os
 from flask import Flask, Response
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 import time
@@ -45,9 +46,8 @@ def after_request(response):
 
 @app.route("/")
 def home():
-    environment = "local"
-    version = "1.0.0"
-
+    environment = os.getenv("ENVIRONMENT", "local")
+    version = os.getenv("APP_VERSION", "1.0.0")
     return f"""
     <html>
         <head>
