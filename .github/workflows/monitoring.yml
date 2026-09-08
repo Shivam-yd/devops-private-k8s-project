@@ -1,0 +1,25 @@
+name: Monitoring
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-monitoring:
+    runs-on: [self-hosted, linux, k3s]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate monitoring manifests
+        run: |
+          kubectl kustomize kubernetes/monitoring
+
+      - name: Deploy monitoring configuration
+        run: |
+          kubectl apply -k kubernetes/monitoring
+
+      - name: Verify monitoring
+        run: |
+          kubectl get ingress -n monitoring
+          kubectl get servicemonitor -n monitoring
