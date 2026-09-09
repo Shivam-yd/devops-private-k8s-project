@@ -133,19 +133,37 @@ jobs:
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
 
-
-
   deploy-uat:
-    needs: deploy-qa 
+    needs: deploy-qa
 
     runs-on: [self-hosted, linux, k3s]
 
     environment:
       name: uat
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Refresh ECR pull secret
+        run: |
+          kubectl create secret docker-registry ecr-registry-secret \
+            --namespace uat \
+            --docker-server=845430216465.dkr.ecr.us-east-1.amazonaws.com \
+            --docker-username=AWS \
+            --docker-password="$(aws ecr get-login-password --region us-east-1)" \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
 
       - name: Deploy to UAT
         run: |
@@ -153,7 +171,7 @@ jobs:
             | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g" \
             | kubectl apply -f -
 
-      - name: Wait for UAT deployment
+      - name: Wait for UAT rollout
         run: |
           kubectl rollout status \
             deployment/devops-app \
@@ -164,10 +182,16 @@ jobs:
         run: |
           kubectl get pods -n uat
 
-      - name: Check UAT service
+      - name: UAT application health check
         run: |
-          kubectl get service -n uat
-
+          kubectl run uat-health-check \
+            --rm \
+            -i \
+            --restart=Never \
+            -n uat \
+            --image=curlimages/curl \
+            -- \
+            curl -f http://devops-app:5000/health
       - name: Verify UAT image
         run: |
           kubectl get deployment devops-app \
@@ -175,18 +199,6 @@ jobs:
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
 
-      - name: UAT health check
-        run: |
-          kubectl run uat-health-check \
-          --rm \
-          -i \
-          --restart=Never \
-          -n uat \
-          --image=curlimages/curl \
-          -- \
-          curl -f http://devops-app:5000/health
-
-         
   deploy-production:
     needs: deploy-uat
 
@@ -195,9 +207,29 @@ jobs:
     environment:
       name: production
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Refresh ECR pull secret
+        run: |
+          kubectl create secret docker-registry ecr-registry-secret \
+            --namespace production \
+            --docker-server=845430216465.dkr.ecr.us-east-1.amazonaws.com \
+            --docker-username=AWS \
+            --docker-password="$(aws ecr get-login-password --region us-east-1)" \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
 
       - name: Deploy to Production
         run: |
@@ -216,9 +248,16 @@ jobs:
         run: |
           kubectl get pods -n production
 
-      - name: Check Production service
+      - name: Production application health check
         run: |
-          kubectl get service -n production
+          kubectl run production-health-check \
+            --rm \
+            -i \
+            --restart=Never \
+            -n production \
+            --image=curlimages/curl \
+            -- \
+            curl -f http://devops-app:5000/health         
 
       - name: Verify Production image
         run: |
@@ -226,16 +265,6 @@ jobs:
             -n production \
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
-      - name: Production health check
-        run: |
-          kubectl run production-health-check \
-          --rm \
-          -i \
-          --restart=Never \
-          -n production \
-          --image=curlimages/curl \
-          -- \
-          curl -f http://devops-app:5000/health
 
       - name: Deployment summary
         run: |
