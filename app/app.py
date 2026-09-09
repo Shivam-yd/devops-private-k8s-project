@@ -47,14 +47,14 @@ def after_request(response):
 @app.route("/")
 def home():
     environment = os.getenv("ENVIRONMENT", "local")
-    version = os.getenv("APP_VERSION", "1.0.0")
+    version = os.getenv("APP_VERSION", "3.0.0")
     return f"""
     <html>
         <head>
             <title>DevOps Application</title>
         </head>
         <body>
-            <h1>Hello from DevOps Kubernetes Project!</h1>
+            <h1>Hello from DevOps Kubernetes Project! project 3</h1>
             <p>Environment: {environment}</p>
             <p>Version: {version}</p>
         </body>

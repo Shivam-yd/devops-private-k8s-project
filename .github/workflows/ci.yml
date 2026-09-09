@@ -270,4 +270,3 @@ jobs:
         run: |
          echo "Application deployed successfully"
          echo "Environment: production"
-         echo "Image: ${{ secrets.DOCKERHUB_USERNAME }}/devops-app:${{ github.sha }}"
