@@ -74,13 +74,30 @@ jobs:
     needs: docker
 
     runs-on: [self-hosted, linux, k3s]
-    
-    environment:
-      name: qa
-      
+
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Refresh ECR pull secret
+        run: |
+          kubectl create secret docker-registry ecr-registry-secret \
+            --namespace qa \
+            --docker-server=845430216465.dkr.ecr.us-east-1.amazonaws.com \
+            --docker-username=AWS \
+            --docker-password="$(aws ecr get-login-password --region us-east-1)" \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
 
       - name: Deploy to QA
         run: |
@@ -99,8 +116,8 @@ jobs:
           kubectl rollout status \
             deployment/devops-app \
             -n qa \
-            --timeout=500s    
-          
+            --timeout=500
+
       - name: Check QA pods
         run: |
           kubectl get pods -n qa
