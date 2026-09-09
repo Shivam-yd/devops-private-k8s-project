@@ -21,6 +21,8 @@ spec:
         app: devops-app
 
     spec:
+      imagePullSecrets:
+        - name: ecr-registry-secret
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -28,7 +30,7 @@ spec:
       containers:
         - name: devops-app
           
-          image: shivamyd/devops-app:1.0.0
+          image: 845430216465.dkr.ecr.us-east-1.amazonaws.com/devops-app:1.0.0
           imagePullPolicy: Always
           ports:
             - containerPort: 5000

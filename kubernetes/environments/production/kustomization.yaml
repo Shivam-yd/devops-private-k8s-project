@@ -12,8 +12,8 @@ replicas:
     count: 3
 
 images:
-  - name: shivamyd/devops-app
-    newTag: IMAGE_TAG_PLACEHOLDER
+  - name: 845430216465.dkr.ecr.us-east-1.amazonaws.com/devops-app:1.0.0
+    #    newTag: IMAGE_TAG_PLACEHOLDER
 
 patches:
   - target:
