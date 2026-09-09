@@ -38,7 +38,7 @@ jobs:
   docker:
     needs: test
 
-    runs-on: [ubuntu-latest]
+    runs-on: [self-hosted, linux, k3s]
 
     permissions:
       id-token: write
