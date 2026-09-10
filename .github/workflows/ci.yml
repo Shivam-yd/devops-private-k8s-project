@@ -18,11 +18,22 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      # --------------------------------
+      # SECURITY - SECRET SCANNING
+      # --------------------------------
 
+      - name: Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # --------------------------------
+      # TESTING
+      # --------------------------------
+      
       - name: Check Python
         run: python3 --version
 
@@ -37,6 +48,11 @@ jobs:
       - name: Test application
         run: |
           ./venv/bin/python -m py_compile app/app.py
+
+      # --------------------------------
+      # CODE QUALITY
+      # --------------------------------
+      
       - name: Check SonarQube URL
         run: |
           echo "SONAR_HOST_URL=${{ vars.SONAR_HOST_URL }}"
@@ -56,6 +72,10 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
+      # --------------------------------
+      # DOCKER BUILD
+      # --------------------------------
+      
   docker:
     needs: test
 
