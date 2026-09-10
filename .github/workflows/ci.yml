@@ -37,6 +37,11 @@ jobs:
       - name: Test application
         run: |
           ./venv/bin/python -m py_compile app/app.py
+      - name: Check SonarQube URL
+        run: |
+          echo "SONAR_HOST_URL=${{ vars.SONAR_HOST_URL }}"
+          curl -I "${{ vars.SONAR_HOST_URL }}/api/system/status"
+
           
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
