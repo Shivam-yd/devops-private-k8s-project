@@ -98,6 +98,24 @@ jobs:
             -t ${{ secrets.DOCKERHUB_USERNAME }}/devops-app:latest \
             ./app
 
+      # --------------------------------
+      # SECURITY - IMAGE SCAN
+      # --------------------------------            
+
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/devops-app:${{ github.sha }}
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+     
+      # --------------------------------
+      # DOCKER HUB PUSH
+      # --------------------------------
+
       - name: Push Docker image
         run: |
           docker push \
