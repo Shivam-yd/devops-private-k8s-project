@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+      
+permissions:
+  contents: read
+  id-token: write
 
   pull_request:
     branches:
@@ -122,6 +126,11 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-app:${{ github.sha }}
           docker push \
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-app:latest
+
+      - name: Cleanup Docker image
+        if: always()
+        run: |
+          docker image rm $IMAGE_NAME:$IMAGE_TAG || true    
 
   deploy-qa:
     needs: docker
