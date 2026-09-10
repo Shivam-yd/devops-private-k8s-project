@@ -54,7 +54,7 @@ def home():
             <title>DevOps Application</title>
         </head>
         <body>
-            <h1>Hello from DevOps Kubernetes Project! project 3</h1>
+            <h1>Hello from DevOps Kubernetes project</h1>
             <p>Environment: {environment}</p>
             <p>Version: {version}</p>
         </body>

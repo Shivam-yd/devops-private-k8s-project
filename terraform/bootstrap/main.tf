@@ -10,22 +10,8 @@ terraform {
 }
 
 provider "aws" {
-  region     = var.aws_region
-  access_key = "test"
-  secret_key = "test"
-  
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
-
-  s3_use_path_style = true
-
-  endpoints {
-    s3        = "http://172.16.4.108:4566"
-    s3control = "http://172.16.4.108:4566"
-  }
+  region = var.aws_region
 }
-
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
