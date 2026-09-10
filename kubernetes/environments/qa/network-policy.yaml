@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: devops-app-network-policy
+  namespace: qa
+spec:
+  podSelector:
+    matchLabels:
+      app: devops-app
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+
+    # Same namespace - health checks
+    - from:
+        - podSelector: {}
+
+      ports:
+        - protocol: TCP
+          port: 5000
+
+    # Traefik
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+
+      ports:
+        - protocol: TCP
+          port: 5000
