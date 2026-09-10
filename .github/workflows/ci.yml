@@ -26,19 +26,9 @@ jobs:
       # --------------------------------
 
       - name: Gitleaks Secret Scan
-        run: |
-          gitleaks dir . \
-            --redact \
-            --exit-code 1 \
-            --report-format sarif \
-            --report-path gitleaks-results.sarif
-      
-      - name: Upload Gitleaks Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gitleaks-results
-          path: gitleaks-results.sarif
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # --------------------------------
       # TESTING
