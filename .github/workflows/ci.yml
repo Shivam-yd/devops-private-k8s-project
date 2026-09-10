@@ -4,18 +4,22 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
       
 permissions:
   contents: read
   id-token: write
 
-  pull_request:
-    branches:
-      - main
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: ${{ vars.FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 }}
   
 jobs:
+
+  # ========================================
+  # TEST + SECURITY + CODE QUALITY
+  # ========================================
 
   test:
     runs-on: [self-hosted, linux, k3s]
@@ -25,6 +29,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
       # --------------------------------
       # SECURITY - SECRET SCANNING
       # --------------------------------
@@ -62,7 +67,6 @@ jobs:
           echo "SONAR_HOST_URL=${{ vars.SONAR_HOST_URL }}"
           curl -I "${{ vars.SONAR_HOST_URL }}/api/system/status"
 
-          
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
@@ -76,10 +80,11 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
-      # --------------------------------
-      # DOCKER BUILD
-      # --------------------------------
-      
+
+  # ========================================
+  # DOCKER BUILD + SECURITY SCAN + PUSH
+  # ========================================
+
   docker:
     needs: test
 
@@ -89,11 +94,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      # --------------------------------
+      # DOCKER HUB LOGIN
+      # --------------------------------
+
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # --------------------------------
+      # DOCKER BUILD
+      # --------------------------------
 
       - name: Build Docker image
         run: |
@@ -127,10 +140,19 @@ jobs:
           docker push \
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-app:latest
 
+      # --------------------------------
+      # DOCKER CLEANUP
+      # --------------------------------
+
       - name: Cleanup Docker image
         if: always()
         run: |
           docker image rm $IMAGE_NAME:$IMAGE_TAG || true    
+
+
+  # ========================================
+  # QA DEPLOYMENT
+  # ========================================
 
   deploy-qa:
     needs: docker
@@ -144,11 +166,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      # --------------------------------
+      # QA DEPLOYMENT
+      # --------------------------------
+
       - name: Deploy to QA
         run: |
           kubectl kustomize kubernetes/environments/qa \
             | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g" \
             | kubectl apply -f -
+
+      # --------------------------------
+      # QA RESTART
+      # --------------------------------
 
       - name: Restart QA deployment
         run: |
@@ -156,20 +186,48 @@ jobs:
             deployment/devops-app \
             -n qa
 
+      # --------------------------------
+      # QA ROLLOUT + ROLLBACK
+      # --------------------------------
+
       - name: Wait for deployment
         run: |
-          kubectl rollout status \
-            deployment/devops-app \
+          set -e
+      
+          if ! kubectl rollout status deployment/devops-app \
             -n qa \
-            --timeout=500s    
-          
+            --timeout=500s; then
+      
+            echo "QA rollout failed. Rolling back..."
+      
+            kubectl rollout undo deployment/devops-app -n qa
+      
+            kubectl rollout status deployment/devops-app \
+              -n qa \
+              --timeout=120s
+      
+            exit 1
+          fi
+
+      # --------------------------------
+      # QA POD CHECK
+      # --------------------------------
+    
       - name: Check QA pods
         run: |
           kubectl get pods -n qa
 
+      # --------------------------------
+      # QA SERVICE CHECK
+      # --------------------------------
+
       - name: Check QA service
         run: |
           kubectl get service -n qa
+
+      # --------------------------------
+      # QA IMAGE VERIFICATION
+      # --------------------------------
 
       - name: Verify QA image
         run: |
@@ -179,6 +237,9 @@ jobs:
             echo
 
 
+  # ========================================
+  # UAT DEPLOYMENT
+  # ========================================
 
   deploy-uat:
     needs: deploy-qa 
@@ -192,26 +253,58 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      # --------------------------------
+      # UAT DEPLOYMENT
+      # --------------------------------
+
       - name: Deploy to UAT
         run: |
           kubectl kustomize kubernetes/environments/uat \
             | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g" \
             | kubectl apply -f -
 
+      # --------------------------------
+      # UAT ROLLOUT + ROLLBACK
+      # --------------------------------
+
       - name: Wait for UAT deployment
         run: |
-          kubectl rollout status \
-            deployment/devops-app \
+          set -e
+          
+          if ! kubectl rollout status deployment/devops-app \
             -n uat \
-            --timeout=120s
+            --timeout=120s; then
+          
+            echo "UAT rollout failed. Rolling back..."
+          
+            kubectl rollout undo deployment/devops-app -n uat
+          
+            kubectl rollout status deployment/devops-app \
+              -n uat \
+              --timeout=120s
+          
+            exit 1
+          fi
+
+      # --------------------------------
+      # UAT POD CHECK
+      # --------------------------------
 
       - name: Check UAT pods
         run: |
           kubectl get pods -n uat
 
+      # --------------------------------
+      # UAT SERVICE CHECK
+      # --------------------------------
+
       - name: Check UAT service
         run: |
           kubectl get service -n uat
+
+      # --------------------------------
+      # UAT IMAGE VERIFICATION
+      # --------------------------------
 
       - name: Verify UAT image
         run: |
@@ -220,18 +313,39 @@ jobs:
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
 
+      # --------------------------------
+      # UAT HEALTH CHECK + ROLLBACK
+      # --------------------------------
+
       - name: UAT health check
         run: |
-          kubectl run uat-health-check \
-          --rm \
-          -i \
-          --restart=Never \
-          -n uat \
-          --image=curlimages/curl \
-          -- \
-          curl -f http://devops-app:5000/health
+          set -e
+          
+          if ! kubectl run uat-health-check \
+            --rm \
+            -i \
+            --restart=Never \
+            -n uat \
+            --image=curlimages/curl \
+            -- \
+            curl -f http://devops-app:5000/health; then
+          
+            echo "UAT health check failed. Rolling back..."
+          
+            kubectl rollout undo deployment/devops-app -n uat
+          
+            kubectl rollout status deployment/devops-app \
+              -n uat \
+              --timeout=120s
+          
+            exit 1
+          fi
 
-         
+
+  # ========================================
+  # PRODUCTION DEPLOYMENT
+  # ========================================
+
   deploy-production:
     needs: deploy-uat
 
@@ -244,26 +358,58 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      # --------------------------------
+      # PRODUCTION DEPLOYMENT
+      # --------------------------------
+
       - name: Deploy to Production
         run: |
           kubectl kustomize kubernetes/environments/production \
             | sed "s|IMAGE_TAG_PLACEHOLDER|${{ github.sha }}|g" \
             | kubectl apply -f -
 
+      # --------------------------------
+      # PRODUCTION ROLLOUT + ROLLBACK
+      # --------------------------------
+
       - name: Wait for Production rollout
         run: |
-          kubectl rollout status \
-            deployment/devops-app \
+          set -e
+          
+          if ! kubectl rollout status deployment/devops-app \
             -n production \
-            --timeout=120s
+            --timeout=120s; then
+          
+            echo "Production rollout failed. Rolling back..."
+          
+            kubectl rollout undo deployment/devops-app -n production
+          
+            kubectl rollout status deployment/devops-app \
+              -n production \
+              --timeout=120s
+          
+            exit 1
+          fi
+
+      # --------------------------------
+      # PRODUCTION POD CHECK
+      # --------------------------------
 
       - name: Check Production pods
         run: |
           kubectl get pods -n production
 
+      # --------------------------------
+      # PRODUCTION SERVICE CHECK
+      # --------------------------------
+
       - name: Check Production service
         run: |
           kubectl get service -n production
+
+      # --------------------------------
+      # PRODUCTION IMAGE VERIFICATION
+      # --------------------------------
 
       - name: Verify Production image
         run: |
@@ -271,16 +417,38 @@ jobs:
             -n production \
             -o jsonpath='{.spec.template.spec.containers[0].image}'
             echo
+
+      # --------------------------------
+      # PRODUCTION HEALTH CHECK + ROLLBACK
+      # --------------------------------
+
       - name: Production health check
         run: |
-          kubectl run production-health-check \
-          --rm \
-          -i \
-          --restart=Never \
-          -n production \
-          --image=curlimages/curl \
-          -- \
-          curl -f http://devops-app:5000/health
+          set -e
+          
+          if ! kubectl run production-health-check \
+            --rm \
+            -i \
+            --restart=Never \
+            -n production \
+            --image=curlimages/curl \
+            -- \
+            curl -f http://devops-app:5000/health; then
+          
+            echo "Production health check failed. Rolling back..."
+          
+            kubectl rollout undo deployment/devops-app -n production
+          
+            kubectl rollout status deployment/devops-app \
+              -n production \
+              --timeout=120s
+          
+            exit 1
+          fi
+
+      # --------------------------------
+      # DEPLOYMENT SUMMARY
+      # --------------------------------
 
       - name: Deployment summary
         run: |
